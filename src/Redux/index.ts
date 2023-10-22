@@ -1,5 +1,7 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
-import appointmentReducer from "./AppointmentSlice";
+import appointmentReducer from "./apoinmentslice";
+
+export const serverUrl = "http://localhost:8080";
 
 const rootReducers = combineReducers({
     appointment: appointmentReducer,

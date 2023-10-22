@@ -3,27 +3,48 @@ import Loader from "../../components/Loader/Loader";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import CreateAppointmentModal from "../../components/CreateAppointmentModal/CreateAppointmentModal";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { storeAppointmentData } from "../../Redux/apoinmentslice";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
-const Home = () => {
-  const data = false;
+const Home = (): JSX.Element => {
+  const isLoading = false;
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const yearList = useSelector((state: any) => state?.appointment?.yearList);
   const monthList = useSelector((state: any) => state?.appointment?.monthList);
-  const [modalStatus, setModalStatus] = useState<boolean>(false);
+  const appointmentList = useSelector(
+    (state: any) => state?.appointment?.appointmentList
+  );
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   const [selectedYear, setSelectedYear] = useState<string>(
     `${new Date().getUTCFullYear()}`
   );
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    `${new Date().getMonth()}`
+    `${new Date().getMonth() + 1}`
   );
 
-  if (data) {
+  const fetchData = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8080/events`);
+      dispatch(storeAppointmentData(response.data));
+    } catch (error) {
+      console.log("fetchData error", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  if (isLoading) {
     return <Loader />;
   }
 
   return (
-    <div className="p-5">
+    <div className="container p-5 bg-gray-100">
       <div className="mb-2 flex justify-between">
         <div className="flex">
           <div className="dropdown">
@@ -32,16 +53,16 @@ const Home = () => {
             </label>
             <ul
               tabIndex={0}
-              className="dropdown-content z-[2] menu p-2 shadow bg-base-100 rounded-box w-52"
+              className="dropdown-content z-10 menu p-2 shadow bg-white rounded-box w-52"
             >
-              {yearList?.map((item) => (
+              {yearList?.map((item: string) => (
                 <li
                   key={item}
                   onClick={() => {
-                    setSelectedYear(item);
+                    navigate(`/year/${item}/month/${selectedMonth}`);
                   }}
                 >
-                  <a className={item === selectedYear ? "text-red-600" : ""}>
+                  <a className={item === selectedYear ? "text-blue-600" : ""}>
                     {item}
                   </a>
                 </li>
@@ -55,16 +76,16 @@ const Home = () => {
             </label>
             <ul
               tabIndex={1}
-              className="dropdown-content z-[2] menu p-2 shadow bg-base-100 rounded-box w-52"
+              className="dropdown-content z-10 menu p-2 shadow bg-white rounded-box w-52"
             >
-              {monthList?.map((item) => (
+              {monthList?.map((item: string) => (
                 <li
                   key={item}
                   onClick={() => {
-                    setSelectedMonth(item);
+                    navigate(`/year/${selectedYear}/month/${item}`);
                   }}
                 >
-                  <a className={item === selectedMonth ? "text-red-600" : ""}>
+                  <a className={item === selectedMonth ? "text-blue-600" : ""}>
                     {item}
                   </a>
                 </li>
@@ -75,9 +96,9 @@ const Home = () => {
 
         <div>
           <button
-            className="btn m-1"
+            className="btn m-1 bg-blue-500 text-white"
             onClick={() => {
-              setModalStatus(true);
+              setIsModalOpen(true);
             }}
           >
             Create Appointment
@@ -87,13 +108,13 @@ const Home = () => {
 
       <FullCalendar
         plugins={[dayGridPlugin]}
-        headerToolbar={false}
         initialView="dayGridMonth"
+        events={appointmentList}
       />
 
       <CreateAppointmentModal
-        modalStatus={modalStatus}
-        setModalStatus={setModalStatus}
+        modalStatus={isModalOpen}
+        setModalStatus={setIsModalOpen}
       />
     </div>
   );
